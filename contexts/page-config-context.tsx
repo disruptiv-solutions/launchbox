@@ -1,51 +1,38 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
+import { PageConfig } from '../types';
 
-/**
- * Hook to detect media query matches
- */
-export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+const defaultPageConfig: PageConfig = {
+  enableLessons: true,
+  enableApps: true,
+  enableCommunity: true
+};
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+const PageConfigContext = createContext<{ pageConfig: PageConfig } | undefined>(undefined);
 
-    const media = window.matchMedia(query);
+export const usePageConfig = () => {
+  const context = useContext(PageConfigContext);
+  if (context === undefined) {
+    throw new Error('usePageConfig must be used within a PageConfigProvider');
+  }
+  return context;
+};
 
-    // Set initial value
-    setMatches(media.matches);
-
-    // Listen for changes
-    const listener = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
-    };
-
-    media.addEventListener('change', listener);
-
-    return () => {
-      media.removeEventListener('change', listener);
-    };
-  }, [query]);
-
-  return matches;
+interface PageConfigProviderProps {
+  children: React.ReactNode;
+  config?: Partial<PageConfig>;
 }
 
-/**
- * Common breakpoint hooks
- */
-export const useIsMobile = () => useMediaQuery('(max-width: 768px)');
-export const useIsTablet = () => useMediaQuery('(min-width: 769px) and (max-width: 1024px)');
-export const useIsDesktop = () => useMediaQuery('(min-width: 1025px)');
-export const useIsLarge = () => useMediaQuery('(min-width: 1280px)');
-export const useIsXLarge = () => useMediaQuery('(min-width: 1536px)');
+export const PageConfigProvider: React.FC<PageConfigProviderProps> = ({ 
+  children, 
+  config = {} 
+}) => {
+  const pageConfig = { ...defaultPageConfig, ...config };
 
-/**
- * Dark mode detection
- */
-export const usePrefersDark = () => useMediaQuery('(prefers-color-scheme: dark)');
-
-/**
- * Reduced motion detection
- */
-export const usePrefersReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)');
+  return (
+    <PageConfigContext.Provider value={{ pageConfig }}>
+      {children}
+    </PageConfigContext.Provider>
+  );
+};

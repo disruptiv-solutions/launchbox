@@ -2,6 +2,7 @@
 "use client";
 
 import { AuthProvider } from '../contexts/auth-context';
+import { PageConfigProvider } from '../contexts/page-config-context';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -10,7 +11,9 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
-      {children}
+      <PageConfigProvider>
+        {children}
+      </PageConfigProvider>
     </AuthProvider>
   );
 }
