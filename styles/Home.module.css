@@ -1,116 +1,71 @@
-.container {
-  padding: 0 2rem;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional nice-to-haves */
+html { 
+  scroll-behavior: smooth; 
 }
 
-.main {
-  min-height: 100vh;
-  padding: 4rem 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+/* Primary theme classes using Nova Blue */
+.theme-primary {
+  @apply bg-primary text-white;
 }
 
-.footer {
-  display: flex;
-  flex: 1;
-  padding: 2rem 0;
-  border-top: 1px solid #eaeaea;
-  justify-content: center;
-  align-items: center;
+.theme-primary:hover {
+  @apply bg-primary-600;
 }
 
-.footer a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
+.theme-border-primary {
+  @apply border-primary;
 }
 
-.title a {
-  color: #0070f3;
-  text-decoration: none;
+/* Background gradients using your new colors */
+.bg-app-gradient {
+  background: linear-gradient(135deg, theme('colors.neutral.50') 0%, theme('colors.primary.50') 50%, theme('colors.neutral.100') 100%);
 }
 
-.title a:hover,
-.title a:focus,
-.title a:active {
-  text-decoration: underline;
+.bg-app-gradient-dark {
+  background: linear-gradient(135deg, theme('colors.dark.900') 0%, theme('colors.dark.800') 50%, theme('colors.dark.700') 100%);
 }
 
-.title {
-  margin: 0;
-  line-height: 1.15;
-  font-size: 4rem;
+/* Card styles with your color palette */
+.card-primary {
+  @apply bg-white border border-neutral-200 shadow-sm hover:shadow-primary dark:bg-dark-800 dark:border-dark-600;
 }
 
-.title,
-.description {
-  text-align: center;
+.card-featured {
+  @apply bg-white border-2 border-primary shadow-primary ring-2 ring-primary ring-opacity-20 dark:bg-dark-800;
 }
 
-.description {
-  margin: 4rem 0;
-  line-height: 1.5;
-  font-size: 1.5rem;
+/* Button styles */
+.btn-primary {
+  @apply inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-primary border border-transparent rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200;
 }
 
-.code {
-  background: #fafafa;
-  border-radius: 5px;
-  padding: 0.75rem;
-  font-size: 1.1rem;
-  font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
-    Bitstream Vera Sans Mono, Courier New, monospace;
+.btn-secondary {
+  @apply inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-dark-800 bg-neutral-100 border border-neutral-300 rounded-lg hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 transition-all duration-200 dark:text-neutral-100 dark:bg-dark-700 dark:border-dark-600 dark:hover:bg-dark-600;
 }
 
-.grid {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  max-width: 800px;
+/* Technology tag styles */
+.tech-tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white;
 }
 
-.card {
-  margin: 1rem;
-  padding: 1.5rem;
-  text-align: left;
-  color: inherit;
-  text-decoration: none;
-  border: 1px solid #eaeaea;
-  border-radius: 10px;
-  transition: color 0.15s ease, border-color 0.15s ease;
-  max-width: 300px;
+/* Feature icon styles */
+.feature-icon {
+  @apply flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-2xl text-white;
 }
 
-.card:hover,
-.card:focus,
-.card:active {
-  color: #0070f3;
-  border-color: #0070f3;
+/* Text color classes */
+.text-app-primary {
+  @apply text-dark-900 dark:text-neutral-100;
 }
 
-.card h2 {
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
+.text-app-secondary {
+  @apply text-dark-600 dark:text-neutral-300;
 }
 
-.card p {
-  margin: 0;
-  font-size: 1.25rem;
-  line-height: 1.5;
-}
-
-.logo {
-  height: 1em;
-  margin-left: 0.2rem;
-}
-
-@media (max-width: 600px) {
-  .grid {
-    width: 100%;
-    flex-direction: column;
-  }
+.text-app-muted {
+  @apply text-dark-400 dark:text-neutral-400;
 }

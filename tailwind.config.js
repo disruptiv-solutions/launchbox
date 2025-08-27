@@ -1,5 +1,4 @@
-
-// tailwind.config.js - Extended for Disruptiv Solutions & Mystical Oracle
+// tailwind.config.js - Updated with new color palette
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -11,7 +10,73 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Disruptiv Solutions Color Palette
+        // New Primary Color Palette
+        primary: {
+          50: '#f0f9ff',   // Very light blue tint
+          100: '#e0f2fe',  // Light blue tint
+          200: '#bae6fd',  // Lighter Nova Blue
+          300: '#7dd3fc',  // Light Nova Blue
+          400: '#38bdf8',  // Medium Nova Blue
+          500: '#19afe2',  // Nova Blue (main)
+          600: '#0284c7',  // Darker Nova Blue
+          700: '#0369a1',  // Much darker Nova Blue
+          800: '#075985',  // Very dark Nova Blue
+          900: '#0c4a6e',  // Darkest Nova Blue
+          DEFAULT: '#19afe2', // Nova Blue as default primary
+        },
+
+        // Secondary colors based on your palette
+        secondary: {
+          50: '#f8fafc',   // Very light Steel Grey tint
+          100: '#f1f5f9',  // Light Steel Grey tint
+          200: '#e2e8f0',  // Lighter Steel Grey
+          300: '#cbd5e1',  // Light Steel Grey
+          400: '#94a3b8',  // Medium Steel Grey
+          500: '#919497',  // Steel Grey (main)
+          600: '#475569',  // Darker Steel Grey
+          700: '#334155',  // Much darker Steel Grey
+          800: '#1e293b',  // Very dark Steel Grey
+          900: '#0f172a',  // Darkest Steel Grey
+          DEFAULT: '#919497', // Steel Grey as default secondary
+        },
+
+        // Neutral colors based on your palette
+        neutral: {
+          50: '#fafafa',   // Very light Dust Tan tint
+          100: '#f5f5f4',  // Light Dust Tan tint
+          200: '#e7e5e4',  // Lighter Dust Tan
+          300: '#d6d3d1',  // Light Dust Tan
+          400: '#a8a29e',  // Medium Dust Tan
+          500: '#eae9e4',  // Dust Tan (main)
+          600: '#78716c',  // Darker Dust Tan
+          700: '#57534e',  // Much darker Dust Tan
+          800: '#44403c',  // Very dark Dust Tan
+          900: '#1c1917',  // Darkest Dust Tan
+          DEFAULT: '#eae9e4', // Dust Tan as default neutral
+        },
+
+        // Dark colors based on your palette
+        dark: {
+          50: '#f8fafc',   // Very light Graphite tint
+          100: '#f1f5f9',  // Light Graphite tint
+          200: '#e2e8f0',  // Lighter Graphite
+          300: '#cbd5e1',  // Light Graphite
+          400: '#94a3b8',  // Medium Graphite
+          500: '#64748b',  // Medium Graphite
+          600: '#475569',  // Graphite-like
+          700: '#334155',  // Darker Graphite
+          800: '#1e293b',  // Very dark Graphite
+          900: '#071520',  // Graphite (main)
+          DEFAULT: '#071520', // Graphite as default dark
+        },
+
+        // Your exact colors for direct usage
+        'nova-blue': '#19afe2',
+        'steel-grey': '#919497', 
+        'dust-tan': '#eae9e4',
+        'graphite': '#071520',
+
+        // Legacy colors (keeping for backward compatibility)
         'blood-red': '#da3019',
         'electric-yellow': '#ffde59',
         'pure-black': '#000000',
@@ -26,8 +91,6 @@ module.exports = {
           700: '#374151',
           900: '#111827',
         },
-
-        // Existing Mystical Oracle Colors (keeping for backward compatibility)
         'mystic-purple': '#1a1a2e',
         'midnight-blue': '#16213e',
         'deep-purple': '#0f3460',
@@ -40,10 +103,10 @@ module.exports = {
         'inter': ['Inter', 'sans-serif'],
       },
       spacing: {
-        '18': '4.5rem',   // h-18 for small cards
-        '30': '7.5rem',   // h-30 for normal cards
-        '96': '24rem',    // h-96 for large cards
-        '108': '27rem',   // h-108 for large cards on md screens
+        '18': '4.5rem',   
+        '30': '7.5rem',   
+        '96': '24rem',    
+        '108': '27rem',   
       },
       animation: {
         'shuffle': 'shuffle 0.8s ease-in-out',
@@ -65,8 +128,8 @@ module.exports = {
           '100%': { transform: 'rotateY(0deg)' },
         },
         mysticalGlow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(212, 175, 55, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(25, 175, 226, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(25, 175, 226, 0.6)' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0px) rotate(45deg)' },
@@ -78,6 +141,9 @@ module.exports = {
         },
       },
       backgroundImage: {
+        'primary-gradient': 'linear-gradient(135deg, #19afe2 0%, #0284c7 100%)',
+        'neutral-gradient': 'linear-gradient(135deg, #eae9e4 0%, #d6d3d1 100%)',
+        'dark-gradient': 'linear-gradient(135deg, #071520 0%, #1e293b 100%)',
         'mystic-gradient': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
         'disruptiv-gradient': 'linear-gradient(135deg, #da3019 0%, #e63c29 100%)',
         'disruptiv-glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -86,6 +152,10 @@ module.exports = {
         'disruptiv': '20px',
       },
       boxShadow: {
+        'primary': '0 6px 24px rgba(25, 175, 226, 0.3)',
+        'primary-hover': '0 12px 36px rgba(25, 175, 226, 0.4)',
+        'neutral': '0 6px 24px rgba(234, 233, 228, 0.3)',
+        'dark': '0 8px 32px rgba(7, 21, 32, 0.3)',
         'disruptiv-primary': '0 6px 24px rgba(218, 48, 25, 0.3)',
         'disruptiv-primary-hover': '0 12px 36px rgba(218, 48, 25, 0.4)',
         'disruptiv-glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
