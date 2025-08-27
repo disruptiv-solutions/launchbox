@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/auth-context';
-import { useTheme } from '../../lib/theme-context';
-import { usePageConfig } from '../../lib/page-config-context';
+import { useTheme } from '../../contexts/theme-context';
+import { usePageConfig } from '../../contexts/page-config-context';
 import { useIsMobile } from '../../hooks/use-media-query';
-import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import ProtectedRoute from '../../app/components/auth/ProtectedRoute';
 import { 
   Sidebar, 
   SidebarHeader, 
@@ -15,9 +15,9 @@ import {
   SidebarFooter, 
   SidebarNav, 
   SidebarUser 
-} from '../../components/ui/sidebar';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
+} from '../../app/components/ui/sidebar';
+import { Button } from '../../app/components/ui/button';
+import { Badge } from '../../app/components/ui/badge';
 import { 
   BarChart3, 
   Rocket, 

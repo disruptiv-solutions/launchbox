@@ -1,5 +1,5 @@
 // Component exports for the design system
-export { Button, type ButtonProps } from './Button';
+export { Button, type ButtonProps } from './button';
 export { 
   Card, 
   CardHeader, 
@@ -8,7 +8,7 @@ export {
   CardTitle, 
   CardDescription,
   type CardProps 
-} from './Card';
+} from './card';
 
 // Re-export utilities
 export { cn } from '../../lib/utils';
