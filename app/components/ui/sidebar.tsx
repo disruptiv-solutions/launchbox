@@ -71,13 +71,21 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 );
 Sidebar.displayName = "Sidebar";
 
+/**
+ * Header now uses a fixed height tied to --dashboard-header-h so it aligns
+ * perfectly with the desktop page header in DashboardLayout.
+ */
 const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, children, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center gap-3 border-b border-[var(--border)] p-6", className)}
+    className={cn(
+      "flex items-center gap-3 border-b border-[var(--border)] px-4",
+      "h-[var(--dashboard-header-h)] box-border",
+      className
+    )}
     {...props}
   >
     {children}
@@ -89,11 +97,7 @@ const SidebarContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex-1 overflow-y-auto p-4", className)}
-    {...props}
-  />
+  <div ref={ref} className={cn("flex-1 overflow-y-auto p-4", className)} {...props} />
 ));
 SidebarContent.displayName = "SidebarContent";
 
@@ -101,11 +105,7 @@ const SidebarFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("border-t border-[var(--border)] p-4", className)}
-    {...props}
-  />
+  <div ref={ref} className={cn("border-t border-[var(--border)] p-4", className)} {...props} />
 ));
 SidebarFooter.displayName = "SidebarFooter";
 
@@ -146,9 +146,7 @@ const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
               )}
             >
               {item.icon && (
-                <span className="flex h-5 w-5 items-center justify-center">
-                  {item.icon}
-                </span>
+                <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
               )}
               <span className="flex-1">{item.name}</span>
               {item.badge && (
@@ -187,18 +185,10 @@ const SidebarUser = React.forwardRef<HTMLDivElement, SidebarUserProps>(
         className={cn("flex items-center gap-3 rounded-lg p-3 hover:bg-[var(--accent)]", className)}
         {...props}
       >
-        <Avatar
-          src={user.avatar}
-          fallback={user.name}
-          size="default"
-        />
+        <Avatar src={user.avatar} fallback={user.name} size="default" />
         <div className="flex-1 overflow-hidden">
-          <p className="text-sm font-medium text-[var(--foreground)] truncate">
-            {user.name}
-          </p>
-          <p className="text-xs text-[var(--muted-foreground)] truncate">
-            {user.email}
-          </p>
+          <p className="text-sm font-medium text-[var(--foreground)] truncate">{user.name}</p>
+          <p className="text-xs text-[var(--muted-foreground)] truncate">{user.email}</p>
           {user.role && (
             <Badge variant="outline" size="sm" className="mt-1">
               {user.role}
@@ -212,12 +202,7 @@ const SidebarUser = React.forwardRef<HTMLDivElement, SidebarUserProps>(
             onClick={onSignOut}
             className="opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -233,11 +218,4 @@ const SidebarUser = React.forwardRef<HTMLDivElement, SidebarUserProps>(
 );
 SidebarUser.displayName = "SidebarUser";
 
-export {
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarNav,
-  SidebarUser,
-};
+export { Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarNav, SidebarUser };

@@ -1,14 +1,15 @@
+//app/dashboard/page.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/auth-context';
 import { getUserStats, getUserRecentActivity, DashboardStats, RecentActivity } from '../../lib/dashboard-analytics';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Avatar } from '../../components/ui/avatar';
-import { SkeletonCard, SkeletonText } from '../../components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Avatar } from '../components/ui/avatar';
+import { SkeletonCard, SkeletonText } from '../components/ui/skeleton';
 import { 
   TrendingUp, 
   Rocket, 
@@ -94,7 +95,7 @@ const DashboardPage = () => {
   const quickActions = [
     { 
       name: 'Browse Apps', 
-      href: '/dashboard/apps', 
+      href: '/apps', 
       icon: Rocket, 
       description: 'Explore powerful AI tools',
       gradient: 'from-[var(--theme-primary)] to-[var(--theme-secondary)]'

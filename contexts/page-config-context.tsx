@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PageConfig } from '../types';
 
 const defaultPageConfig: PageConfig = {
@@ -9,7 +9,12 @@ const defaultPageConfig: PageConfig = {
   enableCommunity: true
 };
 
-const PageConfigContext = createContext<{ pageConfig: PageConfig } | undefined>(undefined);
+interface PageConfigContextType {
+  pageConfig: PageConfig;
+  refreshPageConfig: () => Promise<void>;
+}
+
+const PageConfigContext = createContext<PageConfigContextType | undefined>(undefined);
 
 export const usePageConfig = () => {
   const context = useContext(PageConfigContext);
@@ -28,10 +33,38 @@ export const PageConfigProvider: React.FC<PageConfigProviderProps> = ({
   children, 
   config = {} 
 }) => {
-  const pageConfig = { ...defaultPageConfig, ...config };
+  const [pageConfig, setPageConfig] = useState<PageConfig>({
+    ...defaultPageConfig,
+    ...config
+  });
+
+  const refreshPageConfig = async () => {
+    try {
+      // Import Firebase dynamically to avoid SSR issues
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase-config');
+
+      const configDoc = await getDoc(doc(db, 'settings', 'pages'));
+      if (configDoc.exists()) {
+        const firestoreConfig = configDoc.data() as PageConfig;
+        setPageConfig({ ...defaultPageConfig, ...firestoreConfig });
+      }
+    } catch (error) {
+      console.error('Error loading page config:', error);
+      // Keep current config if loading fails
+    }
+  };
+
+  // Load config on mount
+  useEffect(() => {
+    refreshPageConfig();
+  }, []);
 
   return (
-    <PageConfigContext.Provider value={{ pageConfig }}>
+    <PageConfigContext.Provider value={{ 
+      pageConfig,
+      refreshPageConfig
+    }}>
       {children}
     </PageConfigContext.Provider>
   );

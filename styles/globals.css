@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for your new color system */
+:root {
+  /* Primary colors */
+  --theme-primary: #19afe2;
+  --theme-secondary: #919497;
+  --theme-tertiary: #eae9e4;
+  --theme-quaternary: #071520;
+  --theme-quinary: #19afe2;
+
+  /* Background colors */
+  --background: #fafafa;
+  --foreground: #071520;
+  --surface-0: #ffffff;
+  --surface-1: #f5f5f4;
+  --surface-2: #e7e5e4;
+
+  /* Border and muted colors */
+  --border: #d6d3d1;
+  --muted-foreground: #78716c;
+}
+
+.dark {
+  /* Dark mode variables */
+  --background: #071520;
+  --foreground: #eae9e4;
+  --surface-0: #1e293b;
+  --surface-1: #334155;
+  --surface-2: #475569;
+
+  /* Dark mode borders and muted */
+  --border: #475569;
+  --muted-foreground: #94a3b8;
+}
+
 /* Optional nice-to-haves */
 html { 
   scroll-behavior: smooth; 

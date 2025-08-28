@@ -1,19 +1,19 @@
 // app/providers.tsx
 "use client";
 
-import { AuthProvider } from '../contexts/auth-context';
-import { PageConfigProvider } from '../contexts/page-config-context';
+import React from "react";
+import { TenantProvider } from "@/contexts/tenant-context";
+import { AuthProvider } from "@/contexts/auth-context";
+import { ThemeProvider } from "@/contexts/theme-context";
 
-interface ProvidersProps {
-  children: React.ReactNode;
-}
-
-export default function Providers({ children }: ProvidersProps) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <PageConfigProvider>
-        {children}
-      </PageConfigProvider>
-    </AuthProvider>
+    <TenantProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </AuthProvider>
+    </TenantProvider>
   );
 }

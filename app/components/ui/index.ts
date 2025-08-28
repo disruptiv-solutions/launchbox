@@ -11,4 +11,4 @@ export {
 } from './card';
 
 // Re-export utilities
-export { cn } from '../../lib/utils';
+export { cn } from '../../../lib/cn';
