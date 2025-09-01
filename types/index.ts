@@ -144,6 +144,7 @@ export interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<unknown>;
   signUp: (email: string, password: string, displayName: string) => Promise<unknown>;
+  signUpWithTenant: (tenantData: TenantSignupData) => Promise<{ user: unknown; tenant: WhiteLabelConfig }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -185,4 +186,103 @@ export interface BillingInfo {
   subscription?: UserSubscription;
   nextBillingDate?: Date;
   cancelAtPeriodEnd?: boolean;
+}
+
+// White-label tenant configuration
+export interface WhiteLabelConfig {
+  tenantId: string;
+  companyName: string;
+  status: 'active' | 'pending' | 'suspended';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  ownerId: string; // User ID of the tenant owner/admin
+  
+  // Branding configuration
+  branding: {
+    logoUrl?: string;
+    faviconUrl?: string;
+    companyName: string;
+    tagline?: string;
+    colors: {
+      primary: string;
+      secondary: string;
+      accent?: string;
+      background?: string;
+      text?: string;
+    };
+    fonts?: {
+      heading?: string;
+      body?: string;
+    };
+  };
+  
+  // Content customization
+  content: {
+    welcomeMessage?: string;
+    aboutText?: string;
+    footerText?: string;
+    privacyPolicyUrl?: string;
+    termsOfServiceUrl?: string;
+    supportEmail?: string;
+    contactInfo?: {
+      email?: string;
+      phone?: string;
+      address?: string;
+    };
+  };
+  
+  // Feature configuration
+  features: {
+    enableLessons: boolean;
+    enableApps: boolean;
+    enableCommunity: boolean;
+    enableAnalytics: boolean;
+    enableSubscriptions: boolean;
+    maxUsers?: number;
+    customDomainAllowed: boolean;
+  };
+  
+  // Domain configuration
+  domain: {
+    subdomain: string;
+    customDomain?: string;
+    customDomainVerified?: boolean;
+    sslEnabled?: boolean;
+  };
+  
+  // Settings
+  settings: {
+    allowUserRegistration: boolean;
+    requireEmailVerification: boolean;
+    defaultUserRole: UserRole;
+    sessionTimeout?: number;
+    backupEnabled?: boolean;
+  };
+  
+  // Subscription info
+  subscription?: {
+    planId: string;
+    status: 'trial' | 'active' | 'past_due' | 'canceled';
+    trialEndsAt?: Timestamp;
+    currentPeriodEnd?: Timestamp;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+  };
+}
+
+// Tenant creation form data
+export interface TenantSignupData {
+  companyName: string;
+  subdomain: string;
+  industry?: string;
+  companySize?: string;
+  ownerName: string;
+  ownerEmail: string;
+  password: string;
+  primaryColor?: string;
+  features?: {
+    enableLessons?: boolean;
+    enableApps?: boolean;
+    enableCommunity?: boolean;
+  };
 }

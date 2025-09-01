@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/auth-context";
 import { useTheme } from "../../contexts/theme-context";
+import { useTenant } from "../../contexts/tenant-context";
 import { useIsMobile } from "../../hooks/use-media-query";
 import ProtectedRoute from "../../app/components/auth/ProtectedRoute";
 
@@ -50,18 +51,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 const [sidebarOpen, setSidebarOpen] = useState(false);
 const { user, signOut } = useAuth();
 const { theme, setThemeMode } = useTheme();
+const { tenantId } = useTenant();
 const pathname = usePathname();
 const isMobile = useIsMobile();
+// Build tenant-aware hrefs in dev path-based routing
+const buildTenantHref = (href: string): string => {
+  if (!href || href.startsWith("http")) return href;
+  if (href.startsWith("/login") || href.startsWith("/signup") || href.startsWith("/api")) {
+    return href;
+  }
+  if (!tenantId || tenantId === "default") return href;
+  if (href.startsWith(`/${tenantId}/`) || href === `/${tenantId}`) return href;
+  return `/${tenantId}${href}`;
+};
 
 // State to track if we are in an admin-related page
+const normalizePathname = (path: string): string => {
+  if (tenantId && tenantId !== "default" && path.startsWith(`/${tenantId}/`)) {
+    return path.slice(tenantId.length + 1);
+  }
+  return path;
+};
+
 const [isAdminView, setIsAdminView] = useState(
-pathname.startsWith("/dashboard/admin")
+  normalizePathname(pathname).startsWith("/dashboard/admin")
 );
 
 // Effect to update the view state when the path changes
 useEffect(() => {
-setIsAdminView(pathname.startsWith("/dashboard/admin"));
-}, [pathname]);
+  setIsAdminView(normalizePathname(pathname).startsWith("/dashboard/admin"));
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [pathname, tenantId]);
 
 // Page configuration
 const pageConfig = {
@@ -131,11 +151,19 @@ const adminNavigationItems = [
 // Conditionally select the navigation items to display
 const navigationItems = isAdminView ? adminNavigationItems : mainNavigationItems;
 
+// When in admin view, hide the main nav list entirely and show only admin links
+const renderSidebarNav = () => {
+  return <SidebarNav items={navigationItems} />;
+};
+
 // Determine the title for the header
-const currentNavTitle =
-navigationItems.find((item) => item.href === pathname)?.name ||
-mainNavigationItems.find((item) => item.href === pathname)?.name ||
-"Dashboard";
+const currentNavTitle = (() => {
+  const build = (href: string) => buildTenantHref(href);
+  const match = navigationItems.find((item) => pathname.startsWith(build(item.href)) || pathname === build(item.href));
+  if (match) return match.name;
+  const mainMatch = mainNavigationItems.find((item) => pathname.startsWith(build(item.href)) || pathname === build(item.href));
+  return mainMatch?.name || "Dashboard";
+})();
 
 const handleSignOut = async () => {
 try {
@@ -173,14 +201,14 @@ const AdminToggleButton = () => (
 {(user?.role === "admin" || user?.role === "superadmin") && (
 <div className="px-4 pb-4">
 {!isAdminView ? (
-<Link href="/dashboard/admin" passHref>
+<Link href={buildTenantHref("/dashboard/admin")} passHref>
 <Button variant="outline" className="w-full justify-start text-left">
 <Settings className="mr-2 h-4 w-4" />
 Admin Panel
 </Button>
 </Link>
 ) : (
-<Link href="/dashboard" passHref>
+<Link href={buildTenantHref("/dashboard")} passHref>
 <Button variant="outline" className="w-full justify-start text-left">
 <ArrowLeft className="mr-2 h-4 w-4" />
 Exit Admin Panel
@@ -276,7 +304,7 @@ className="h-8 w-8"
 </SidebarHeader>
 
 <SidebarContent>
-<SidebarNav items={navigationItems} />
+{renderSidebarNav()}
 </SidebarContent>
 
 {user && (

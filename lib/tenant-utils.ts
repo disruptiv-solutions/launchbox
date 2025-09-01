@@ -3,6 +3,8 @@
  * Handles tenant detection from domains, subdomains, and routing
  */
 
+import { WhiteLabelConfig, TenantSignupData, UserRole } from '../types';
+
 export interface TenantInfo {
   id: string;
   subdomain?: string;
@@ -209,4 +211,185 @@ export const RESERVED_SUBDOMAINS = [
  */
 export function isReservedSubdomain(subdomain: string): boolean {
   return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase());
+}
+
+/**
+ * Create a new tenant with default configuration
+ */
+export async function createTenant(
+  tenantSignupData: TenantSignupData,
+  ownerId: string
+): Promise<WhiteLabelConfig> {
+  const { doc, setDoc, Timestamp } = await import('firebase/firestore');
+  const { db } = await import('./firebase-config');
+
+  // Generate tenant ID from subdomain
+  const tenantId = tenantSignupData.subdomain.toLowerCase();
+
+  // Validate tenant ID
+  if (!isValidTenantId(tenantId)) {
+    throw new Error('Invalid tenant ID format');
+  }
+
+  if (isReservedSubdomain(tenantId)) {
+    throw new Error('This subdomain is reserved and cannot be used');
+  }
+
+  // Create default white-label configuration
+  const defaultConfig: WhiteLabelConfig = {
+    tenantId,
+    companyName: tenantSignupData.companyName,
+    status: 'active',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    ownerId,
+
+    // Default branding
+    branding: {
+      companyName: tenantSignupData.companyName,
+      colors: {
+        primary: tenantSignupData.primaryColor || '#19afe2', // Nova Blue default
+        secondary: '#64748b', // Slate-500
+        accent: '#0ea5e9', // Sky-500
+        background: '#ffffff',
+        text: '#1f2937'
+      }
+    },
+
+    // Default content
+    content: {
+      welcomeMessage: `Welcome to ${tenantSignupData.companyName}!`,
+      supportEmail: tenantSignupData.ownerEmail
+    },
+
+    // Default features
+    features: {
+      enableLessons: tenantSignupData.features?.enableLessons ?? true,
+      enableApps: tenantSignupData.features?.enableApps ?? true,
+      enableCommunity: tenantSignupData.features?.enableCommunity ?? true,
+      enableAnalytics: true,
+      enableSubscriptions: false, // Start with free features
+      maxUsers: 10, // Initial limit
+      customDomainAllowed: false
+    },
+
+    // Domain configuration
+    domain: {
+      subdomain: tenantId,
+      sslEnabled: true
+    },
+
+    // Default settings
+    settings: {
+      allowUserRegistration: true,
+      requireEmailVerification: false,
+      defaultUserRole: 'free' as UserRole,
+      sessionTimeout: 24 * 60 * 60 * 1000, // 24 hours
+      backupEnabled: false
+    },
+
+    // Trial subscription
+    subscription: {
+      planId: 'trial',
+      status: 'trial',
+      trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)) // 14 days
+    }
+  };
+
+  // Save to Firestore
+  await setDoc(doc(db, 'tenants', tenantId), defaultConfig);
+
+  console.log(`✅ [TENANT-UTILS] Created tenant: ${tenantId} for company: ${tenantSignupData.companyName}`);
+
+  return defaultConfig;
+}
+
+/**
+ * Check if a subdomain is available for use
+ */
+export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+  try {
+    // Validate format first
+    if (!isValidTenantId(subdomain)) {
+      return false;
+    }
+
+    // Check if reserved
+    if (isReservedSubdomain(subdomain)) {
+      return false;
+    }
+
+    // For client-side checking, use the API endpoint to avoid permission issues
+    if (typeof window !== 'undefined') {
+      const response = await fetch(`/api/tenant/check-availability?subdomain=${encodeURIComponent(subdomain)}`);
+      const data = await response.json();
+      return data.available;
+    }
+
+    // Server-side: Check if already exists in database
+    const { doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('./firebase-config');
+    
+    const configDoc = await getDoc(doc(db, 'tenants', subdomain.toLowerCase()));
+    return !configDoc.exists();
+  } catch (error) {
+    console.error('Error checking subdomain availability:', error);
+    return false;
+  }
+}
+
+/**
+ * Generate a tenant ID suggestion from company name
+ */
+export function generateTenantIdFromCompany(companyName: string): string {
+  return companyName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+    .substring(0, 20); // Limit length
+}
+
+/**
+ * Get tenant configuration from Firestore
+ */
+export async function getTenantConfig(tenantId: string): Promise<WhiteLabelConfig | null> {
+  try {
+    const { doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('./firebase-config');
+    
+    const configDoc = await getDoc(doc(db, 'tenants', tenantId));
+    
+    if (configDoc.exists()) {
+      return configDoc.data() as WhiteLabelConfig;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`Error getting tenant config for ${tenantId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Update tenant configuration
+ */
+export async function updateTenantConfig(
+  tenantId: string, 
+  updates: Partial<WhiteLabelConfig>
+): Promise<void> {
+  try {
+    const { doc, updateDoc, Timestamp } = await import('firebase/firestore');
+    const { db } = await import('./firebase-config');
+    
+    await updateDoc(doc(db, 'tenants', tenantId), {
+      ...updates,
+      updatedAt: Timestamp.now()
+    });
+    
+    console.log(`✅ [TENANT-UTILS] Updated tenant config: ${tenantId}`);
+  } catch (error) {
+    console.error(`Error updating tenant config for ${tenantId}:`, error);
+    throw error;
+  }
 }

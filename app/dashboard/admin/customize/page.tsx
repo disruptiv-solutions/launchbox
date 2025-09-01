@@ -19,18 +19,40 @@ import {
   Sun,
   Moon,
   Monitor,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Building,
+  Globe
 } from 'lucide-react';
 import { useTheme } from '../../../../contexts/theme-context';
-import { ThemeColors } from '../../../../types';
+import { useTenant } from '../../../../contexts/tenant-context';
+import { ThemeColors, WhiteLabelConfig } from '../../../../types';
+import { getTenantConfig, updateTenantConfig } from '../../../../lib/tenant-utils';
 
 const CustomizePage: React.FC = () => {
   const { theme, setThemeColors, setThemeMode, resetToPreset, setBranding, loading: themeLoading } = useTheme();
+  const { tenantId, isValidTenant } = useTenant();
+  
   const [brandingLoading, setBrandingLoading] = useState(false);
-  const [platformName, setPlatformName] = useState(theme.branding?.title || 'Ian McDonald AI');
+  const [tenantConfigLoading, setTenantConfigLoading] = useState(false);
+  const [platformName, setPlatformName] = useState(theme.branding?.title || 'LaunchBox');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // White-label specific state
+  const [tenantConfig, setTenantConfig] = useState<WhiteLabelConfig | null>(null);
+  const [companyInfo, setCompanyInfo] = useState({
+    companyName: '',
+    tagline: '',
+    supportEmail: '',
+    welcomeMessage: ''
+  });
+  const [featuresConfig, setFeaturesConfig] = useState({
+    enableLessons: true,
+    enableApps: true,
+    enableCommunity: true,
+    enableAnalytics: true
+  });
 
   const colorDefinitions = [
     { key: 'primary' as keyof ThemeColors, name: 'Primary', desc: 'Main brand color for buttons and highlights', icon: '🔵' },
@@ -88,10 +110,44 @@ const CustomizePage: React.FC = () => {
     setValidationErrors(errors);
   }, [theme.colors]);
 
+  // Load tenant configuration
+  useEffect(() => {
+    const loadTenantConfig = async () => {
+      if (!tenantId || !isValidTenant) return;
+      
+      setTenantConfigLoading(true);
+      try {
+        const config = await getTenantConfig(tenantId);
+        if (config) {
+          setTenantConfig(config);
+          setCompanyInfo({
+            companyName: config.branding.companyName,
+            tagline: config.branding.tagline || '',
+            supportEmail: config.content.supportEmail || '',
+            welcomeMessage: config.content.welcomeMessage || ''
+          });
+          setFeaturesConfig({
+            enableLessons: config.features.enableLessons,
+            enableApps: config.features.enableApps,
+            enableCommunity: config.features.enableCommunity,
+            enableAnalytics: config.features.enableAnalytics
+          });
+          setPlatformName(config.branding.companyName);
+        }
+      } catch (error) {
+        console.error('Error loading tenant config:', error);
+      } finally {
+        setTenantConfigLoading(false);
+      }
+    };
+
+    loadTenantConfig();
+  }, [tenantId, isValidTenant]);
+
   // Update platform name when theme branding changes
   useEffect(() => {
-    setPlatformName(theme.branding?.title || 'Ian McDonald AI');
-  }, [theme.branding?.title]);
+    setPlatformName(theme.branding?.title || tenantConfig?.branding.companyName || 'LaunchBox');
+  }, [theme.branding?.title, tenantConfig?.branding.companyName]);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -170,6 +226,45 @@ const CustomizePage: React.FC = () => {
 
   const isValidHexColor = (color: string) => {
     return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+  };
+
+  const handleTenantConfigSave = async () => {
+    if (!tenantConfig || !tenantId) return;
+
+    setTenantConfigLoading(true);
+    try {
+      const updates: Partial<WhiteLabelConfig> = {
+        branding: {
+          ...tenantConfig.branding,
+          companyName: companyInfo.companyName,
+          tagline: companyInfo.tagline,
+        },
+        content: {
+          ...tenantConfig.content,
+          supportEmail: companyInfo.supportEmail,
+          welcomeMessage: companyInfo.welcomeMessage,
+        },
+        features: {
+          ...tenantConfig.features,
+          ...featuresConfig
+        }
+      };
+
+      await updateTenantConfig(tenantId, updates);
+      
+      // Refresh tenant config
+      const updatedConfig = await getTenantConfig(tenantId);
+      if (updatedConfig) {
+        setTenantConfig(updatedConfig);
+      }
+
+      alert('White-label configuration saved successfully!');
+    } catch (error) {
+      console.error('Error saving tenant config:', error);
+      alert('Failed to save configuration. Please try again.');
+    } finally {
+      setTenantConfigLoading(false);
+    }
   };
 
   return (
@@ -525,6 +620,237 @@ const CustomizePage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* White-Label Configuration - Only show for non-default tenants */}
+        {tenantId !== 'default' && tenantConfig && (
+          <>
+            {/* Company Information */}
+            <Card variant="glass" hover="glow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-[var(--theme-primary)]" />
+                  Company Information
+                </CardTitle>
+                <CardDescription>
+                  Configure your company details and messaging for your white-label instance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="companyName" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                        Company Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="companyName"
+                        value={companyInfo.companyName}
+                        onChange={(e) => setCompanyInfo(prev => ({ ...prev, companyName: e.target.value }))}
+                        className="w-full px-4 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface-0)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--theme-primary)]/50 focus:border-[var(--theme-primary)] transition-colors"
+                        placeholder="Your Company Name"
+                        disabled={tenantConfigLoading}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="tagline" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                        Company Tagline
+                      </label>
+                      <input
+                        type="text"
+                        id="tagline"
+                        value={companyInfo.tagline}
+                        onChange={(e) => setCompanyInfo(prev => ({ ...prev, tagline: e.target.value }))}
+                        className="w-full px-4 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface-0)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--theme-primary)]/50 focus:border-[var(--theme-primary)] transition-colors"
+                        placeholder="Your company tagline"
+                        disabled={tenantConfigLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="supportEmail" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                      Support Email
+                    </label>
+                    <input
+                      type="email"
+                      id="supportEmail"
+                      value={companyInfo.supportEmail}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, supportEmail: e.target.value }))}
+                      className="w-full px-4 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface-0)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--theme-primary)]/50 focus:border-[var(--theme-primary)] transition-colors"
+                      placeholder="support@yourcompany.com"
+                      disabled={tenantConfigLoading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="welcomeMessage" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                      Welcome Message
+                    </label>
+                    <textarea
+                      id="welcomeMessage"
+                      value={companyInfo.welcomeMessage}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-[var(--border)] rounded-lg bg-[var(--surface-0)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--theme-primary)]/50 focus:border-[var(--theme-primary)] transition-colors"
+                      placeholder="Welcome message displayed to new users"
+                      disabled={tenantConfigLoading}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Feature Configuration */}
+            <Card variant="elevated" hover="lift">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-[var(--theme-primary)]" />
+                  Feature Configuration
+                </CardTitle>
+                <CardDescription>
+                  Enable or disable features for your white-label instance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { 
+                      key: 'enableLessons', 
+                      name: 'Learning Lessons', 
+                      description: 'Enable the lessons/courses section',
+                      icon: '📚'
+                    },
+                    { 
+                      key: 'enableApps', 
+                      name: 'Interactive Apps', 
+                      description: 'Enable the apps/tools section',
+                      icon: '🚀'
+                    },
+                    { 
+                      key: 'enableCommunity', 
+                      name: 'Community Forum', 
+                      description: 'Enable community discussions',
+                      icon: '💬'
+                    },
+                    { 
+                      key: 'enableAnalytics', 
+                      name: 'Analytics Dashboard', 
+                      description: 'Enable usage analytics and reporting',
+                      icon: '📊'
+                    }
+                  ].map((feature) => (
+                    <div key={feature.key} className="flex items-start gap-4 p-4 bg-[var(--surface-1)] rounded-xl">
+                      <div className="text-2xl">{feature.icon}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-[var(--foreground)]">{feature.name}</h4>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={featuresConfig[feature.key as keyof typeof featuresConfig]}
+                              onChange={(e) => setFeaturesConfig(prev => ({
+                                ...prev,
+                                [feature.key]: e.target.checked
+                              }))}
+                              className="sr-only peer"
+                              disabled={tenantConfigLoading}
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-primary)]"></div>
+                          </label>
+                        </div>
+                        <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tenant Information */}
+            <Card variant="floating" hover="scale">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-[var(--theme-primary)]" />
+                  Workspace Information
+                </CardTitle>
+                <CardDescription>
+                  Your white-label instance details and subscription status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-[var(--muted-foreground)]">Tenant ID</label>
+                      <p className="font-mono text-sm text-[var(--foreground)] bg-[var(--surface-1)] px-3 py-2 rounded-lg">
+                        {tenantConfig.tenantId}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-[var(--muted-foreground)]">Subdomain</label>
+                      <p className="text-sm text-[var(--foreground)] bg-[var(--surface-1)] px-3 py-2 rounded-lg">
+                        {tenantConfig.domain.subdomain}.yourplatform.com
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-[var(--muted-foreground)]">Status</label>
+                      <Badge 
+                        variant={tenantConfig.status === 'active' ? 'default' : 'secondary'}
+                        className="ml-2"
+                      >
+                        {tenantConfig.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-[var(--muted-foreground)]">Created</label>
+                      <p className="text-sm text-[var(--foreground)] bg-[var(--surface-1)] px-3 py-2 rounded-lg">
+                        {tenantConfig.createdAt.toDate().toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-[var(--muted-foreground)]">Subscription</label>
+                      <Badge 
+                        variant={tenantConfig.subscription?.status === 'active' ? 'default' : 'secondary'}
+                        className="ml-2"
+                      >
+                        {tenantConfig.subscription?.planId || 'Free'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Save Configuration */}
+            <Card variant="glass">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-[var(--foreground)]">Save White-Label Configuration</h3>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      Apply your company information and feature settings
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleTenantConfigSave}
+                    disabled={tenantConfigLoading || !companyInfo.companyName.trim()}
+                    variant="gradient"
+                    leftIcon={<Save className="h-4 w-4" />}
+                    loading={tenantConfigLoading}
+                  >
+                    Save Configuration
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </ProtectedRoute>
   );

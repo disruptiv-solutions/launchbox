@@ -8,6 +8,7 @@ import { ChevronRight, X } from "lucide-react";
 import { Badge } from "./badge";
 import { Avatar } from "./avatar";
 import { Button } from "./button";
+import { useTenant } from "../../../contexts/tenant-context";
 
 const sidebarVariants = cva(
   "flex h-full flex-col border-r border-[var(--border)] bg-[var(--surface-0)] backdrop-blur-xl",
@@ -124,16 +125,31 @@ interface SidebarNavProps {
 const SidebarNav = React.forwardRef<HTMLDivElement, SidebarNavProps>(
   ({ items, className, ...props }, ref) => {
     const pathname = usePathname();
+    const { tenantId } = useTenant();
+
+    const buildTenantHref = (href: string): string => {
+      if (!href || href.startsWith("http")) return href;
+      // Keep auth and API routes unprefixed
+      if (href.startsWith("/login") || href.startsWith("/signup") || href.startsWith("/api")) {
+        return href;
+      }
+      // Default tenant uses base paths
+      if (!tenantId || tenantId === "default") return href;
+      // Avoid double prefix
+      if (href.startsWith(`/${tenantId}/`) || href === `/${tenantId}`) return href;
+      return `/${tenantId}${href}`;
+    };
 
     return (
       <nav ref={ref} className={cn("space-y-1", className)} {...props}>
         {items.map((item) => {
-          const isActive = item.isActive ?? pathname === item.href;
+          const tenantHref = buildTenantHref(item.href);
+          const isActive = item.isActive ?? pathname === tenantHref || pathname === item.href;
 
           return (
             <Link
               key={item.href}
-              href={item.disabled ? "#" : item.href}
+              href={item.disabled ? "#" : tenantHref}
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                 "hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]",

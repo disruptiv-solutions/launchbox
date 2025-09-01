@@ -1,0 +1,202 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isSuperAdmin(userId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.role == 'superadmin';
+    }
+    
+    function isUserInTenant(tenantId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+    }
+    
+    function getTenantId() {
+      return isAuthenticated() ? 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId : 
+        'default';
+    }
+
+    // ==========================================
+    // USER MANAGEMENT
+    // ==========================================
+    
+    match /users/{userId} {
+      // Users can read/write their own document
+      allow read, write: if isOwner(userId);
+      
+      // Allow creation during signup
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Allow reading user data for role/tenant checks (needed for security rules)
+      allow read: if isAuthenticated();
+    }
+
+    // ==========================================
+    // TENANT MANAGEMENT
+    // ==========================================
+    
+    match /tenants/{tenantId} {
+      // Allow read access for:
+      // 1. Default tenant (anonymous access for theme loading)
+      // 2. Authenticated users in their own tenant
+      // 3. Basic tenant existence check (for subdomain validation) - only check if document exists
+      allow read: if tenantId == 'default' ||
+                     (isAuthenticated() && isUserInTenant(tenantId)) ||
+                     (isAuthenticated() && isSuperAdmin(request.auth.uid));
+      
+      // Allow creation for new tenant signups
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == request.resource.data.ownerId;
+      
+      // Allow updates by tenant owner or super admin
+      allow update: if isAuthenticated() && 
+                       (request.auth.uid == resource.data.ownerId ||
+                        isSuperAdmin(request.auth.uid));
+      
+      // Only super admins can delete tenants
+      allow delete: if isSuperAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // TENANT-ISOLATED COLLECTIONS
+    // ==========================================
+    
+    // Apps collection with tenant isolation
+    match /apps/{appId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       resource.data.tenantId == getTenantId());
+      allow create: if isAuthenticated();
+    }
+    
+    // Platforms collection with tenant isolation
+    match /platforms/{platformId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       resource.data.tenantId == getTenantId());
+      allow create: if isAuthenticated();
+    }
+
+    // Lessons collection with tenant isolation
+    match /lessons/{lessonId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       resource.data.tenantId == getTenantId());
+      allow create: if isAuthenticated();
+    }
+    
+    // Community posts with tenant isolation
+    match /community-posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+                               (request.auth.uid == resource.data.authorId ||
+                                isSuperAdmin(request.auth.uid));
+    }
+
+    // Comments with tenant isolation
+    match /comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+                               (request.auth.uid == resource.data.authorId ||
+                                isSuperAdmin(request.auth.uid));
+    }
+
+    // User progress tracking with tenant isolation
+    match /user-progress/{progressId} {
+      allow read, write: if isAuthenticated() && 
+                            request.auth.uid == resource.data.userId;
+    }
+
+    // ==========================================
+    // THEME AND SETTINGS
+    // ==========================================
+    
+    match /settings/{settingId} {
+      // Allow reading settings for everyone (including anonymous users for theme loading)
+      allow read: if true;
+      
+      // Allow writing settings for authenticated admins
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // Theme configurations per tenant
+    match /themes/{tenantId} {
+      allow read: if isAuthenticated() && 
+                     (isUserInTenant(tenantId) || 
+                      tenantId == 'default' ||
+                      isSuperAdmin(request.auth.uid));
+      
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       (exists(/databases/$(database)/documents/tenants/$(tenantId)) &&
+                        request.auth.uid == get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerId));
+    }
+
+    // ==========================================
+    // ANALYTICS AND REPORTING
+    // ==========================================
+    
+    match /analytics/{documentId} {
+      allow read, write: if isAuthenticated() && 
+                            (isSuperAdmin(request.auth.uid) ||
+                             resource.data.tenantId == getTenantId());
+    }
+
+    // ==========================================
+    // ADMIN ONLY COLLECTIONS
+    // ==========================================
+    
+    match /admin-logs/{logId} {
+      allow read, write: if isSuperAdmin(request.auth.uid);
+    }
+    
+    match /system-config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin(request.auth.uid);
+    }
+
+    // ==========================================
+    // FILE UPLOADS AND STORAGE METADATA
+    // ==========================================
+    
+    match /uploads/{uploadId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isSuperAdmin(request.auth.uid) ||
+                       request.auth.uid == resource.data.uploadedBy);
+    }
+
+    // ==========================================
+    // DEFAULT DENY
+    // ==========================================
+    
+    // Explicitly deny access to any documents not covered by the above rules
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

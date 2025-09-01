@@ -54,21 +54,22 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({
   const validateTenant = async (tenant: TenantInfo): Promise<boolean> => {
     try {
       console.log(`🔍 [TENANT] Validating tenant:`, tenant);
-      console.log(`🔍 [TENANT] Checking white-label-configs/${tenant.id}`);
+
+      // For default tenant, always valid (no need to check Firestore)
+      if (tenant.id === DEFAULT_TENANT_ID) {
+        console.log(`✅ [TENANT] Default tenant validated`);
+        return true;
+      }
+
+      console.log(`🔍 [TENANT] Checking tenants/${tenant.id}`);
 
       // Check if tenant configuration exists in Firestore
-      const configDoc = await getDoc(doc(db, 'white-label-configs', tenant.id));
+      const configDoc = await getDoc(doc(db, 'tenants', tenant.id));
 
       console.log(`🔍 [TENANT] Config doc exists:`, configDoc.exists());
 
       if (configDoc.exists()) {
         console.log(`✅ [TENANT] Tenant ${tenant.id} validated - config found`);
-        return true;
-      }
-
-      // For default tenant, always valid
-      if (tenant.id === DEFAULT_TENANT_ID) {
-        console.log(`✅ [TENANT] Default tenant validated`);
         return true;
       }
 

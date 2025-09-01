@@ -15,8 +15,10 @@ Activity,
 Clock
 } from 'lucide-react';
 import { getAdminDashboardStats } from '../../../lib/admin';
+import { useTenant } from '../../../contexts/tenant-context';
 
 const AdminDashboard = () => {
+const { tenantId } = useTenant();
 const [adminStats, setAdminStats] = useState({
 users: { total: 0, premium: 0, admin: 0, free: 0 },
 community: { totalPosts: 0, totalComments: 0 },
@@ -26,13 +28,18 @@ lessons: 0
 });
 const [loading, setLoading] = useState(true);
 
+// Sidebar provides admin navigation; no shortcuts here
+
 useEffect(() => {
 loadAdminStats();
-}, []);
+// Re-load when tenant changes
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [tenantId]);
 
 const loadAdminStats = async () => {
 try {
-const stats = await getAdminDashboardStats();
+// Scope stats to tenant unless a superadmin page passes a different scope later
+const stats = await getAdminDashboardStats(tenantId);
 setAdminStats(stats);
 } catch (error) {
 console.error('Error loading admin stats:', error);
