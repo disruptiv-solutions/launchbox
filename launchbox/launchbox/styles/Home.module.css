@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional nice-to-haves */
+html { 
+  scroll-behavior: smooth; 
+}
+
+/* Primary theme classes using Nova Blue */
+.theme-primary {
+  @apply bg-primary text-white;
+}
+
+.theme-primary:hover {
+  @apply bg-primary-600;
+}
+
+.theme-border-primary {
+  @apply border-primary;
+}
+
+/* Background gradients using your new colors */
+.bg-app-gradient {
+  background: linear-gradient(135deg, theme('colors.neutral.50') 0%, theme('colors.primary.50') 50%, theme('colors.neutral.100') 100%);
+}
+
+.bg-app-gradient-dark {
+  background: linear-gradient(135deg, theme('colors.dark.900') 0%, theme('colors.dark.800') 50%, theme('colors.dark.700') 100%);
+}
+
+/* Card styles with your color palette */
+.card-primary {
+  @apply bg-white border border-neutral-200 shadow-sm hover:shadow-primary dark:bg-dark-800 dark:border-dark-600;
+}
+
+.card-featured {
+  @apply bg-white border-2 border-primary shadow-primary ring-2 ring-primary ring-opacity-20 dark:bg-dark-800;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-primary border border-transparent rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-200;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-dark-800 bg-neutral-100 border border-neutral-300 rounded-lg hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 transition-all duration-200 dark:text-neutral-100 dark:bg-dark-700 dark:border-dark-600 dark:hover:bg-dark-600;
+}
+
+/* Technology tag styles */
+.tech-tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white;
+}
+
+/* Feature icon styles */
+.feature-icon {
+  @apply flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-2xl text-white;
+}
+
+/* Text color classes */
+.text-app-primary {
+  @apply text-dark-900 dark:text-neutral-100;
+}
+
+.text-app-secondary {
+  @apply text-dark-600 dark:text-neutral-300;
+}
+
+.text-app-muted {
+  @apply text-dark-400 dark:text-neutral-400;
+}
